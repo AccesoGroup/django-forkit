@@ -1,6 +1,7 @@
 from django.db import models
 from django.db.models import related
 
+# Deprecated
 class DeferredCommit(object):
     """Differentiates a non-direct related object that should be deferred
     during the commit phase.
@@ -110,15 +111,13 @@ def _get_field_value(instance, accessor):
 
     value = None
     # attempt to retrieve deferred values first, since they will be
-    # the value once comitted. these will never contain non-relational
+    # the value once committed. these will never contain non-relational
     # fields
     if hasattr(instance, '_commits'):
         if m2m:
             value = instance._commits.get(accessor, direct=False)
         else:
             value = instance._commits.get(accessor, direct=direct)
-        if value and isinstance(value, DeferredCommit):
-            value = value.value
 
     # deferred relations can never be a NoneType
     if value is None:
@@ -129,6 +128,9 @@ def _get_field_value(instance, accessor):
             value = None
         # catch many-to-many or related foreign keys
         except ValueError:
+            value = []
+        # catch generic relation field errors
+        except AttributeError:           
             value = []
 
     # get the queryset associated with the m2m or reverse foreign key.

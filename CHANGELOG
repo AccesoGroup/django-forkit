@@ -1,3 +1,18 @@
+2012-10-24 Hampus Stjernhav <hstjernhav@acceso.com>
+
+	* Strict mode. Adds new fork mode - 'strict' - as default. This mode 
+	performs a deep copy of all indirect related objects recursively while
+	conserving references to direct related objects. 
+	
+	* Generic m2m relations supported (think tags).
+	
+	* Many-to-many relations with customized intermediate model supported.
+	
+	* Root signals. Passes a new argument - 'root' - with the signals to
+	indicate whether the sender of the signal is the root instance. This is 
+	very useful to perform different operations depending of the depth of 
+	the fork.
+	 
 2011-10-10  Byron Ruth  <ruthb@email.chop.edu>
 
 	* Arbitrary Signal Keyword Arguments. Each utility function can take any

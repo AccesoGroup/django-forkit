@@ -1,5 +1,6 @@
 from copy import deepcopy
 from django.db import models
+from django.contrib.contenttypes.generic import GenericRelation
 from forkit import utils, signals
 from forkit.commit import commit_model_object
 
@@ -7,10 +8,6 @@ def _fork_one2one(instance, value, field, direct, accessor, deep, **kwargs):
     "Due to the unique constraint, only deep forks can be performed."
     if deep:
         fork = _memoize_fork(value, deep=deep, **kwargs)
-
-        if not direct:
-            fork = utils.DeferredCommit(fork)
-
         instance._commits.defer(accessor, fork, direct=direct)
 
 def _fork_foreignkey(instance, value, field, direct, accessor, deep, **kwargs):
@@ -18,18 +15,21 @@ def _fork_foreignkey(instance, value, field, direct, accessor, deep, **kwargs):
         if direct:
             fork = _memoize_fork(value, deep=deep, **kwargs)
         else:
-            fork = [_memoize_fork(rel, deep=deep, **kwargs) for rel in value]
-            fork = utils.DeferredCommit(fork)
+            fork = [_memoize_fork(rel, deep=deep, **kwargs) for rel in value]           
     else:
-        fork = value
+        memo = kwargs.pop('memo', None)
+        if memo is None:
+            memo = utils.Memo()
+        elif memo.has(value):
+            fork = memo.get(value)
+        else:
+            fork = value
 
     instance._commits.defer(accessor, fork, direct=direct)
 
 def _fork_many2many(instance, value, field, direct, accessor, deep, **kwargs):
     if deep:
         fork = [_memoize_fork(rel, deep=deep, **kwargs) for rel in value]
-        if not direct:
-            fork = utils.DeferredCommit(fork)
     else:
         fork = value
 
@@ -47,16 +47,30 @@ def _fork_field(reference, instance, accessor, **kwargs):
 
     # recursive calls cannot be saved until everything has been traversed..
     kwargs['commit'] = False
-
+    
     if isinstance(field, models.OneToOneField):
         return _fork_one2one(instance, value, field, direct,
             accessor, **kwargs)
 
     if isinstance(field, models.ForeignKey):
+        if kwargs['strict'] and direct:
+           kwargs['deep'] = False       
+        
         return _fork_foreignkey(instance, value, field, direct,
             accessor, **kwargs)
 
-    if isinstance(field, models.ManyToManyField):
+    if isinstance(field, models.ManyToManyField):    
+        #Exclude customized intermediate models
+        if not field.rel.through._meta.auto_created:
+            return
+        
+        if kwargs['strict']: 
+            kwargs['deep'] = False
+        
+        return _fork_many2many(instance, value, field, direct,
+            accessor, **kwargs)
+        
+    if isinstance(field, GenericRelation):   
         return _fork_many2many(instance, value, field, direct,
             accessor, **kwargs)
 
@@ -67,16 +81,21 @@ def _memoize_fork(reference, **kwargs):
     "Resets the specified instance relative to ``reference``"
     # popped so it does not get included in the config for the signal
     memo = kwargs.pop('memo', None)
+    
+    root = False
 
     # for every call, keep track of the reference and the instance being
     # acted on. this is used for recursive calls to related objects. this
     # ensures relationships that follow back up the tree are caught and are
     # merely referenced rather than traversed again.
     if memo is None:
+        root = True
         memo = utils.Memo()
     elif memo.has(reference):
         return memo.get(reference)
 
+    kwargs['root'] = root
+    
     # initialize and memoize new instance
     instance = reference.__class__()
     instance._commits = utils.Commits(reference)    
@@ -86,18 +105,25 @@ def _memoize_fork(reference, **kwargs):
     config = {
         'fields': None,
         'exclude': ['pk'],
-        'deep': False,
+        'deep': True,
         'commit': True,
+        'strict': True
     }
 
     # pop off and set any config params for signals
     for key in config.iterkeys():
         if kwargs.has_key(key):
-            config[key] = kwargs.pop(key)
+            config[key] = kwargs.pop(key)  
+            
+    kwargs['strict'] = config['strict']
 
     # pre-signal
     signals.pre_fork.send(sender=reference.__class__, reference=reference,
         instance=instance, config=config, **kwargs)
+    
+    # always exclude pk to create copies of related objects
+    if 'exclude' in config:
+        config['exclude'].append('pk')
 
     fields = config['fields']
     exclude = config['exclude']
@@ -130,4 +156,5 @@ def fork_model_object(reference, **kwargs):
     """Creates a fork of the reference object. If an object is supplied, it
     effectively gets reset relative to the reference object.
     """
+        
     return _memoize_fork(reference, **kwargs)
