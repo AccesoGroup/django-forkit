@@ -13,6 +13,9 @@ will be inferred depending on the value of ``deep``.
 - ``exclude`` - A list of fields to not fork (not applicable if ``fields``
 is defined)
 - ``deep`` - If ``True``, traversing all related objects and creates forks
+- ``strict`` - If ``True``and combined with ``deep`` option, traverses all 
+indirect related objects recursively and creates forks of them as well while
+conserving references to direct related objects.
 of them as well, effectively creating a new _tree_ of objects.
 - ``commit`` - If ``True``, all forks (including related objects) will be saved
 in the order of dependency. If ``False``, all commits are stashed away until
@@ -21,7 +24,7 @@ the root fork is committed.
 receivers. Useful for altering runtime behavior in signal receivers.
 
 ```python
-fork(reference, [fields=None], [exclude=('pk',)], [deep=False], [commit=True], [**kwargs])
+fork(reference, [fields=None], [exclude=('pk',)], [strict=True], [deep=True], [commit=True], [**kwargs])
 ```
 
 forkit.tools.reset
@@ -119,6 +122,7 @@ forkit.signals.pre_fork
 - ``reference`` - the reference object the fork is being created from
 - ``instance`` - the forked object itself
 - ``config`` - a ``dict`` of the keyword arguments passed into ``forkit.tools.fork``
+- ``root`` - a boolean indicating that the sender is the root object being forked
 
 forkit.signals.post_fork
 -----------------------
@@ -126,6 +130,7 @@ forkit.signals.post_fork
 - ``sender`` - the model class of the instance
 - ``reference`` - the reference object the fork is being created from
 - ``instance`` - the forked object itself
+- ``root`` - a boolean indicating that the sender is the root object being forked
 
 forkit.signals.pre_reset
 -----------------------
@@ -148,6 +153,7 @@ forkit.signals.pre_commit
 - ``sender`` - the model class of the instance
 - ``reference`` - the reference object the instance has been derived
 - ``instance`` - the object to be committed
+- ``root`` - a boolean indicating that the sender is the root object being forked
 
 forkit.signals.post_commit
 -----------------------
@@ -155,6 +161,7 @@ forkit.signals.post_commit
 - ``sender`` - the model class of the instance
 - ``reference`` - the reference object the instance has been derived
 - ``instance`` - the object that has been committed
+- ``root`` - a boolean indicating that the sender is the root object being forked
 
 forkit.signals.pre_diff
 -----------------------
