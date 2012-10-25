@@ -48,12 +48,10 @@ def _memoize_commit(instance, **kwargs):
         return memo.get(reference)
 
     memo.add(reference, instance)
-    
-    kwargs['root'] = root
 
     # pre-signal
     signals.pre_commit.send(sender=reference.__class__, reference=reference,
-        instance=instance, **kwargs)
+        instance=instance, root=root, **kwargs)
 
     # commit all dependencies first, save it, then traverse dependents
     _commit_direct(instance, memo=memo, **kwargs)
@@ -62,7 +60,7 @@ def _memoize_commit(instance, **kwargs):
 
     # post-signal
     signals.post_commit.send(sender=reference.__class__, reference=reference,
-        instance=instance, **kwargs)
+        instance=instance, root=root, **kwargs)
 
     return instance
 

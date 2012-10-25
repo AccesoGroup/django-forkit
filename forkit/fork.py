@@ -93,8 +93,6 @@ def _memoize_fork(reference, **kwargs):
         memo = utils.Memo()
     elif memo.has(reference):
         return memo.get(reference)
-
-    kwargs['root'] = root
     
     # initialize and memoize new instance
     instance = reference.__class__()
@@ -119,7 +117,7 @@ def _memoize_fork(reference, **kwargs):
 
     # pre-signal
     signals.pre_fork.send(sender=reference.__class__, reference=reference,
-        instance=instance, config=config, **kwargs)
+        instance=instance, config=config, root=root, **kwargs)
     
     # always exclude pk to create copies of related objects
     if 'exclude' in config:
@@ -144,7 +142,7 @@ def _memoize_fork(reference, **kwargs):
 
     # post-signal
     signals.post_fork.send(sender=reference.__class__, reference=reference,
-        instance=instance, **kwargs)
+        instance=instance, root=root, **kwargs)
 
     # as of now, this will only every be from a top-level call
     if commit:
