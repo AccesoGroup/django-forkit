@@ -16,7 +16,7 @@ class ForkModelObjectTestCase(TestCase):
     def test_shallow_fork(self):
         # Author
 
-        fork = self.author.fork()
+        fork = self.author.fork(deep=False)
 
         self.assertEqual(fork.pk, 3)
         self.assertEqual(self.author.posts.through.objects.count(), 3)
@@ -78,7 +78,7 @@ class ForkModelObjectTestCase(TestCase):
     def test_deep_fork(self):
         # Author
 
-        fork = self.author.fork(deep=True)
+        fork = self.author.fork(deep=True, strict=False)
 
         self.assertEqual(fork.pk, 3)
 
@@ -97,7 +97,7 @@ class ForkModelObjectTestCase(TestCase):
 
         # Post
 
-        fork = self.post.fork(deep=True)
+        fork = self.post.fork(deep=True, strict=False)
         self.assertEqual(fork.pk, 3)
 
         # new counts
@@ -122,3 +122,53 @@ class ForkModelObjectTestCase(TestCase):
         # 3 posts X 4 tags
         self.assertEqual(fork.post_set.through.objects.count(), 15)
 
+    def test_strict_deep_fork(self):
+        # Author
+
+        fork = self.author.fork()
+
+        self.assertEqual(fork.pk, 3)
+
+        # new counts
+        self.assertEqual(Author.objects.count(), 3)
+        self.assertEqual(Post.objects.count(), 2)
+        self.assertEqual(Blog.objects.count(), 2)
+        self.assertEqual(Tag.objects.count(), 3)
+
+        # check all through relationship
+        # 1 post X 2 authors X 2 
+        self.assertEqual(self.author.posts.through.objects.count(), 4)
+        
+        post = self.author.posts.all()[0]
+        # 2 posts X 3 tags
+        self.assertEqual(post.tags.through.objects.count(), 6)
+
+        # Post
+
+        fork = self.post.fork()
+        self.assertEqual(fork.pk, 3)
+
+        # new counts
+        self.assertEqual(Author.objects.count(), 3)
+        self.assertEqual(Post.objects.count(), 3)
+        self.assertEqual(Blog.objects.count(), 2)
+        self.assertEqual(Tag.objects.count(), 3)
+
+        # 1 posts X 2 authors X 3
+        self.assertEqual(self.post.authors.through.objects.count(), 6)
+        self.assertEqual(self.post.tags.through.objects.count(), 9)
+
+        # Blog
+
+        fork = self.blog.fork()
+        self.assertEqual(fork.pk, 3)
+        self.assertEqual(Author.objects.count(), 3)
+        self.assertEqual(Post.objects.count(), 4)
+        self.assertEqual(Tag.objects.count(), 3)
+
+        # Tag
+
+        fork = self.tag.fork()
+        self.assertEqual(fork.pk, 4)
+        # 3 posts X 4 tags
+        self.assertEqual(fork.post_set.through.objects.count(), 12)
