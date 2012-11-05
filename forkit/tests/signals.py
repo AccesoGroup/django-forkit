@@ -23,7 +23,7 @@ class SignalsTestCase(TestCase):
     def test_shallow_signal(self):
         signals.pre_fork.connect(author_config, sender=Author)
 
-        fork = self.author.fork()
+        fork = self.author.fork(deep=False, strict=False)
         self.assertEqual(self.author.diff(fork), {
             'last_name': ''
         });
@@ -32,7 +32,7 @@ class SignalsTestCase(TestCase):
 
     def test_deep_signal(self):
         # before signal is connected.. complete deep fork
-        fork = self.author.fork(commit=False, deep=True)
+        fork = self.author.fork(commit=False, deep=True, strict=False)
 
         post0 = utils._get_field_value(fork, 'posts')[0][0]
         self.assertEqual(post0.title, 'Django Tip: Descriptors')
@@ -43,7 +43,7 @@ class SignalsTestCase(TestCase):
         # connect the post signal to limit the fields..
         signals.pre_fork.connect(post_config, sender=Post)
 
-        fork = self.author.fork(commit=False, deep=True)
+        fork = self.author.fork(commit=False, deep=True, strict=False)
 
         post0 = utils._get_field_value(fork, 'posts')[0][0]
         self.assertEqual(post0.title, 'Django Tip: Descriptors')

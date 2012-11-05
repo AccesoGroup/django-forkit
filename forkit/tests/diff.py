@@ -44,17 +44,17 @@ class DiffModelObjectTestCase(TestCase):
         # even without the commit, the diff is clean. related objects are
         # compared against the _related dict
 
-        fork = self.author.fork(commit=False)
+        fork = self.author.fork(commit=False, deep=False, strict=False)
         diff = fork.diff(self.author)
         self.assertEqual(diff, {})
 
-        fork = self.post.fork(commit=False)
+        fork = self.post.fork(commit=False, deep=False, strict=False)
         diff = fork.diff(self.post)
         self.assertEqual(diff, {})
 
         # since Author is a OneToOneField and this is not a deep fork, it
         # still does not have a value
-        fork = self.blog.fork(commit=False)
+        fork = self.blog.fork(commit=False, deep=False, strict=False)
         diff = fork.diff(self.blog)
         self.assertEqual(diff, {
             'author': self.author
@@ -65,7 +65,7 @@ class DiffModelObjectTestCase(TestCase):
             'author': None
         })
 
-        fork = self.tag.fork(commit=False)
+        fork = self.tag.fork(commit=False, deep=False, strict=False)
         diff = self.tag.diff(fork)
         self.assertEqual(diff, {})
 
@@ -74,7 +74,7 @@ class DiffModelObjectTestCase(TestCase):
         c = C.objects.get(pk=1)
 
         # need to commit, since lists are not yet handled..
-        fork = c.fork(commit=True, deep=True)
+        fork = c.fork(commit=True, deep=True, strict=False)
         diff = c.diff(fork, deep=True)
         self.assertEqual(diff, {})
 

@@ -1,8 +1,9 @@
-2012-10-24 Hampus Stjernhav <hstjernhav@acceso.com>
+2012-11-05 Hampus Stjernhav <hstjernhav@acceso.com>
 
 	* Strict mode. Adds new fork mode - 'strict' - as default. This mode 
-	performs a deep copy of all indirect related objects recursively while
-	conserving references to direct related objects. 
+	performs a deep copy of all indirect objects related by foreign key 
+	recursively while conserving references to direct related objects.
+	All indirect m2m objects references are ignored. 
 	
 	* Generic m2m relations supported (think tags).
 	

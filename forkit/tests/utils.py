@@ -65,7 +65,7 @@ class UtilsTestCase(TestCase):
             set(['first_name', 'last_name', 'posts']))
 
         self.assertEqual(utils._default_model_fields(post),
-            set(['blog', 'authors', 'tags', 'title']))
+            set(['blog', 'authors', 'tags', 'title', 'comments']))
 
         self.assertEqual(utils._default_model_fields(blog),
             set(['name', 'author']))
@@ -83,7 +83,7 @@ class UtilsTestCase(TestCase):
             set(['first_name', 'last_name', 'posts', 'blog']))
 
         self.assertEqual(utils._default_model_fields(post, deep=True),
-            set(['blog', 'authors', 'tags', 'title']))
+            set(['blog', 'authors', 'tags', 'title', 'comments']))
 
         self.assertEqual(utils._default_model_fields(blog, deep=True),
             set(['name', 'author', 'post_set']))

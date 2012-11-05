@@ -1,7 +1,9 @@
 from django.db import models
-from django.db.models import related
+from django.db.models import related, get_model
+from django.contrib.contenttypes.generic import GenericRelation
+from django.contrib.contenttypes.models import ContentType
 
-# Deprecated
+
 class DeferredCommit(object):
     """Differentiates a non-direct related object that should be deferred
     during the commit phase.
@@ -66,7 +68,7 @@ def _get_field_by_accessor(instance, accessor):
     """
     try:
         field, model, direct, m2m = instance._meta.get_field_by_name(accessor)
-
+       
         if isinstance(field, related.RelatedObject):
             field = field.field
     # if this occurs, try related object accessor
@@ -118,6 +120,8 @@ def _get_field_value(instance, accessor):
             value = instance._commits.get(accessor, direct=False)
         else:
             value = instance._commits.get(accessor, direct=direct)
+        if value and isinstance(value, DeferredCommit):
+            value = value.value
 
     # deferred relations can never be a NoneType
     if value is None:
@@ -130,8 +134,15 @@ def _get_field_value(instance, accessor):
         except ValueError:
             value = []
         # catch generic relation field errors
-        except AttributeError:           
-            value = []
+        except AttributeError:
+            # get related object belonging to generic foreign key
+            if isinstance(field, GenericRelation):
+                ctype = getattr(instance, field.content_type_field_name)
+                model = get_model(ctype.app_label, ctype.model)
+                object_id = getattr(instance, field.object_id_field_name)
+                value = [model.objects.get(pk=object_id)]
+            else:
+                value = []
 
     # get the queryset associated with the m2m or reverse foreign key.
     # logic broken up for readability
@@ -142,7 +153,7 @@ def _get_field_value(instance, accessor):
     # ignoring ``model`` for now.. no use for it
     return value, field, direct, m2m
 
-def _default_model_fields(instance, exclude=('pk',), deep=False):
+def _default_model_fields(instance, exclude=('pk',), deep=False, conserve=[], **kwargs):
     "Aggregates the default set of fields for creating an object fork."
     if not exclude:
         exclude = []
@@ -157,9 +168,10 @@ def _default_model_fields(instance, exclude=('pk',), deep=False):
         [f.name for f in instance._meta.fields + instance._meta.many_to_many] +
         [r.get_accessor_name() for r in instance._meta.get_all_related_many_to_many_objects()]
     )
+    
+    conserve.extend([r.field.content_type_field_name for r in instance._meta.get_all_related_many_to_many_objects() if isinstance(r.field, GenericRelation)])
 
     if deep:
         fields += [r.get_accessor_name() for r in instance._meta.get_all_related_objects()]
 
     return set(fields) - set(exclude)
-

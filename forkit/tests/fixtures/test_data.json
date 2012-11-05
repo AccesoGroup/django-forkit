@@ -55,6 +55,33 @@
         }
     },
     {
+    	"pk": 1,
+    	"model": "tests.comment",
+    	"fields": {
+    		"content_type": 8,
+    		"object_id": 1,
+    		"text": "Comment 1"
+    	}
+    },
+    {
+    	"pk": 2,
+    	"model": "tests.comment",
+    	"fields": {
+    		"content_type": 8,
+    		"object_id": 1,
+    		"text": "Comment 3"
+    	}
+    },
+    {
+    	"pk": 3,
+    	"model": "tests.comment",
+    	"fields": {
+    		"content_type": 8,
+    		"object_id": 1,
+    		"text": "Comment 2"
+    	}
+    },
+    {
         "pk": 1,
         "model": "tests.a",
         "fields": {

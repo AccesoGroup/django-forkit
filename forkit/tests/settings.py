@@ -7,7 +7,8 @@ DATABASES = {
 
 INSTALLED_APPS = (
     'forkit',
-    'forkit.tests'
+    'forkit.tests',
+    'django.contrib.contenttypes'
 )
 
 COVERAGE_MODULES = (

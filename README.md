@@ -14,7 +14,7 @@ will be inferred depending on the value of ``deep``.
 is defined)
 - ``deep`` - If ``True``, traversing all related objects and creates forks
 - ``strict`` - If ``True``and combined with ``deep`` option, traverses all 
-indirect related objects recursively and creates forks of them as well while
+indirect related objects (foreign key) recursively and creates forks of them as well while
 conserving references to direct related objects.
 of them as well, effectively creating a new _tree_ of objects.
 - ``commit`` - If ``True``, all forks (including related objects) will be saved
