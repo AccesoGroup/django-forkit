@@ -1,3 +1,8 @@
+2013-09-30 Hampus Stjernhav <hstjernhav@acceso.com>
+	* Adds support for forking m2m relations in parent model class 
+	when forking a child class in a multi-table inheritance 
+	setup.
+
 2012-11-05 Hampus Stjernhav <hstjernhav@acceso.com>
 
 	* Strict mode. Adds new fork mode - 'strict' - as default. This mode 

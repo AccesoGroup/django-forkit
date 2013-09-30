@@ -112,7 +112,7 @@ def _memoize_fork(reference, **kwargs):
     "Resets the specified instance relative to ``reference``"
     # popped so it does not get included in the config for the signal
     memo = kwargs.pop('memo', None)
-    
+   
     root = False
 
     # for every call, keep track of the reference and the instance being
@@ -164,7 +164,6 @@ def _memoize_fork(reference, **kwargs):
     # no fields are defined, so get the default ones for shallow or deep
     if not fields:
         fields = utils._default_model_fields(reference, exclude=exclude, deep=deep, conserve=conserve, **kwargs)
-
     # add arguments for downstream use
     kwargs.update({'deep': deep})
 

@@ -24,12 +24,14 @@ def _commit_related(instance, memo, **kwargs):
         if isinstance(value, utils.DeferredCommit):
             value = value.value
             
-            stack = kwargs['stack']
-            
             if type(value) is list:
+                for x in value:
+                    x._accessor = getattr(instance, accessor)
+
+                stack = kwargs['stack']
                 stack.extend(value)
             else:
-                stack.append(value)                
+                stack.append(value)
         else:
             if type(value) is list:
                 map(lambda rel: _memoize_commit(rel, memo=memo, **kwargs), value)
@@ -66,7 +68,13 @@ def _memoize_commit(instance, **kwargs):
 
     # commit all dependencies first, save it, then traverse dependents
     _commit_direct(instance, memo=memo, **kwargs)
-    instance.save()
+    
+    if hasattr(instance, '_accessor'):
+        if hasattr(instance._accessor, 'add'):
+            instance._accessor.add(instance)
+    else:
+        instance.save()
+
     _commit_related(instance, memo=memo, stack=stack, **kwargs)
     
     if root:
